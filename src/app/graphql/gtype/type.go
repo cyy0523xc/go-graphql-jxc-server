@@ -8,13 +8,13 @@ import (
 var UserType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "User",
 	Fields: graphql.Fields{
-		"id": &graphql.Field{
+		"ID": &graphql.Field{
 			Type: graphql.Int,
 		},
-		"name": &graphql.Field{
+		"Name": &graphql.Field{
 			Type: graphql.String,
 		},
-		"phone": &graphql.Field{
+		"Phone": &graphql.Field{
 			Type: graphql.String,
 		},
 	},
@@ -24,10 +24,10 @@ var UserType = graphql.NewObject(graphql.ObjectConfig{
 var LoginType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Login",
 	Fields: graphql.Fields{
-		"id": &graphql.Field{
+		"ID": &graphql.Field{
 			Type: graphql.Int,
 		},
-		"token": &graphql.Field{
+		"Token": &graphql.Field{
 			Type: graphql.String,
 		},
 	},

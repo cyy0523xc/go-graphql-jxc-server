@@ -22,6 +22,7 @@
 - GraphQL: https://github.com/graphql-go/graphql , Demo: https://github.com/graphql-go/graphql/blob/master/examples/todo/main.go
 - GORM: https://github.com/jinzhu/gorm , 文档：http://jinzhu.me/gorm/
 - jwt-go: https://github.com/dgrijalva/jwt-go 
+- GoDotEnv: https://github.com/joho/godotenv
 
 
 ## 表结构

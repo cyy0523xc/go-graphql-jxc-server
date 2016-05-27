@@ -1,11 +1,35 @@
 package query
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
+	"github.com/joho/godotenv"
+	"io/ioutil"
+	"os"
+	"time"
 
 	"app/database"
 	"app/graphql/gtype"
 )
+
+type loginUser struct {
+	ID    int32
+	Token string
+}
+
+var ibbdSecretKey []byte = nil
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		panic("Error loading .env file!")
+	}
+
+	ibbdSecretKey, err = ioutil.ReadFile(os.Getenv("IBBD_SECRET_FILE"))
+	if err != nil {
+		panic("error")
+	}
+}
 
 var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 	Name: "RootQuery",
@@ -50,13 +74,23 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 				passwordQuery, isPasswordOK := params.Args["password"].(string)
 				println(phoneQuery)
 				println(passwordQuery)
+
 				if isPasswordOK && isPhoneOK {
-					println("is OK")
-					return database.User{}, nil
+					token := jwt.New(jwt.SigningMethodHS256)
+					token.Claims["user"] = "1"
+					token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+					tokenString, err := token.SignedString(ibbdSecretKey)
+					if err == nil {
+						println("is OK")
+					} else {
+						println("token error")
+					}
+					println(tokenString)
+					return loginUser{ID: 1, Token: tokenString}, nil
 				}
 
 				println("is not OK")
-				return database.User{}, nil
+				return loginUser{}, nil
 			},
 		},
 	},
