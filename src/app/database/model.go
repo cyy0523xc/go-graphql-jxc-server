@@ -64,6 +64,7 @@ type GoodsAttr struct {
 // 进货
 type Purchase struct {
 	ID           int32
+	UserID       int32
 	GoodsID      int32
 	MSRP         float32 `gorm:"default 0"` // 厂商建议售价
 	CostPrice    float32 // 进货价
@@ -79,6 +80,7 @@ type Purchase struct {
 // 订单记录
 type Order struct {
 	ID           int32
+	UserID       int32
 	GoodsID      int32
 	PurchaseID   int32   // 进货批次
 	MSRP         float32 `gorm:"default 0"` // 厂商建议售价
