@@ -5,8 +5,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
+	"gopkg.in/hlandau/passlib.v1"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"time"
 
 	"app/database"
@@ -40,54 +42,71 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 		"user": &graphql.Field{
 			Type: gtype.UserType,
 			Args: graphql.FieldConfigArgument{
-				"id": &graphql.ArgumentConfig{
+				"ID": &graphql.ArgumentConfig{
 					Type: graphql.Int,
 				},
 			},
 
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				idQuery, isOK := params.Args["id"].(int)
+				idQuery, isOK := params.Args["ID"].(int)
 				if !isOK {
-					return database.User{}, errors.New("Error: id param")
+					return nil, errors.New("Error: id param")
 				}
 
-				println(idQuery)
-				return database.User{}, nil
+				db := database.GetDB()
+				user := new(database.User)
+				if db.First(&user, idQuery).RecordNotFound() {
+					return nil, errors.New("Error: not found for id = " + strconv.Itoa(idQuery))
+				}
+
+				return user, nil
 			},
 		},
 
 		// 用户登陆
+		// curl -g 'http://localhost:8080/graphql?query={login(Phone:"135sd7223",Password:"12321"){ID,Token}}'
 		"login": &graphql.Field{
 			Type: gtype.LoginType,
 			Args: graphql.FieldConfigArgument{
-				"phone": &graphql.ArgumentConfig{
+				"Phone": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
-				"password": &graphql.ArgumentConfig{
+				"Password": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
 			},
 
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				phoneQuery, isPhoneOK := params.Args["phone"].(string)
-				passwordQuery, isPasswordOK := params.Args["password"].(string)
-				println(phoneQuery)
-				println(passwordQuery)
+				phoneQuery, isPhoneOK := params.Args["Phone"].(string)
+				passwordQuery, isPasswordOK := params.Args["Password"].(string)
 
-				if isPasswordOK && isPhoneOK {
-					token := jwt.New(jwt.SigningMethodHS256)
-					token.Claims["user"] = "1"
-					token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-					tokenString, err := token.SignedString(ibbdSecretKey)
-					if err != nil {
-						return loginUser{}, errors.New("Error: create Token")
-					}
-					println("is OK")
-					println(tokenString)
-					return loginUser{ID: 1, Token: tokenString}, nil
+				if !isPasswordOK || !isPhoneOK {
+					return nil, errors.New("Error: params")
 				}
 
-				return loginUser{}, errors.New("Error: params")
+				// 判断密码是否正确
+				user := new(database.User)
+				db := database.GetDB()
+				//if db.Select("id", "password").Where("phone = ?", phoneQuery).First(&user).RecordNotFound() {
+				if db.Select([]string{"id", "password"}).Where("phone = ?", phoneQuery).First(&user).RecordNotFound() {
+					return nil, errors.New("Error: not found for phone = " + phoneQuery)
+				}
+				println(user.Password)
+
+				_, err := passlib.Verify(passwordQuery, user.Password)
+				if err != nil {
+					return nil, errors.New("Error: password verify")
+				}
+
+				// 生成token
+				token := jwt.New(jwt.SigningMethodHS256)
+				token.Claims["user"] = "1"
+				token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+				tokenString, err := token.SignedString(ibbdSecretKey)
+				if err != nil {
+					return nil, errors.New("Error: create Token")
+				}
+				return loginUser{ID: 1, Token: tokenString}, nil
 			},
 		},
 	},

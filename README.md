@@ -19,10 +19,11 @@
 
 ## 使用组件
 
-- GraphQL: https://github.com/graphql-go/graphql , Demo: https://github.com/graphql-go/graphql/blob/master/examples/todo/main.go
-- GORM: https://github.com/jinzhu/gorm , 文档：http://jinzhu.me/gorm/
-- jwt-go: https://github.com/dgrijalva/jwt-go 
-- GoDotEnv: https://github.com/joho/godotenv
+- API: GraphQL: https://github.com/graphql-go/graphql , Demo: https://github.com/graphql-go/graphql/blob/master/examples/todo/main.go
+- ORM: GORM: https://github.com/jinzhu/gorm , 文档：http://jinzhu.me/gorm/
+- Auth: jwt-go: https://github.com/dgrijalva/jwt-go 
+- Config: GoDotEnv: https://github.com/joho/godotenv
+- Password: passlib: https://github.com/hlandau/passlib 
 
 
 ## 表结构
