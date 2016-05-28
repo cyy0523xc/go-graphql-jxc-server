@@ -1,6 +1,7 @@
 package query
 
 import (
+	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
@@ -46,13 +47,11 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 				idQuery, isOK := params.Args["id"].(int)
-				if isOK {
-					println("is OK")
-					println(idQuery)
-					return database.User{}, nil
+				if !isOK {
+					return database.User{}, errors.New("Error: id param")
 				}
 
-				println("is not OK")
+				println(idQuery)
 				return database.User{}, nil
 			},
 		},
@@ -80,17 +79,15 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 					token.Claims["user"] = "1"
 					token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 					tokenString, err := token.SignedString(ibbdSecretKey)
-					if err == nil {
-						println("is OK")
-					} else {
-						println("token error")
+					if err != nil {
+						return loginUser{}, errors.New("Error: create Token")
 					}
+					println("is OK")
 					println(tokenString)
 					return loginUser{ID: 1, Token: tokenString}, nil
 				}
 
-				println("is not OK")
-				return loginUser{}, nil
+				return loginUser{}, errors.New("Error: params")
 			},
 		},
 	},

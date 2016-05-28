@@ -8,8 +8,8 @@ import (
 // 用户
 type User struct {
 	ID        int32
-	Name      string `gorm:"size:100;index:idx_name"`       // 姓名
-	Phone     string `gorm:"not null;type:char(11);unique"` //手机号，用于登陆
+	Name      string `gorm:"type:varchar(100);index:idx_name"` // 姓名
+	Phone     string `gorm:"not null;type:char(11);unique"`    //手机号，用于登陆
 	Password  string `gorm:"not null;type:varchar(150)"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
