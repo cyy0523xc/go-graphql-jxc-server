@@ -62,7 +62,7 @@ var RootMutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 				hash, err := passlib.Hash(user.Password)
 				if err != nil {
-					return nil, errors.New("Error: passlib.Hash")
+					return nil, err
 				}
 				user.Password = hash
 

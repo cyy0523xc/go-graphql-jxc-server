@@ -23,7 +23,7 @@ type loginUser struct {
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		panic("Error loading .env file!")
+		panic(err.Error())
 	}
 }
 
@@ -102,7 +102,7 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 				println(token)
 				_, err := lib.ParseUserToken(token)
 				if err != nil {
-					return nil, errors.New("Error: parse Token")
+					return nil, err
 				}
 
 				page, isOK = params.Args["Page"].(int)
@@ -167,14 +167,14 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 
 				_, err := passlib.Verify(passwordQuery, user.Password)
 				if err != nil {
-					return nil, errors.New("Error: password verify")
+					return nil, err
 				}
 
 				// 生成token
 				expTime := time.Now().Add(time.Hour * 72).Unix()
 				token, err := lib.GetUserToken(user.ID, expTime)
 				if err != nil {
-					return nil, errors.New("Error: create Token")
+					return nil, err
 				}
 				return loginUser{ID: 1, Token: token}, nil
 			},
