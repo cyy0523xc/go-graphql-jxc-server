@@ -38,6 +38,6 @@ func main() {
 	fmt.Println("Get single user: curl -g 'http://localhost:8080/graphql?query={user(id:1){id,name}}'")
 	fmt.Println("Login user: curl -g 'http://localhost:8080/graphql?query={login(phone:\"13701370137\",password:\"123456\"){ID,Token}}'")
 	fmt.Println("Create new user: curl -g 'http://localhost:8080/graphql?query=mutation+_{createUser(Name:\"alex\",Phone:\"1371300\",Password:\"1234\"){ID}}'")
-	fmt.Println("Load todo list: curl -g 'http://localhost:8080/graphql?query={todoList{id,text,done}}'")
+	fmt.Println("Load user list: curl -g 'http://localhost:8080/graphql?query={userList(Page:2){ID,Name}}'")
 	http.ListenAndServe(":8080", nil)
 }

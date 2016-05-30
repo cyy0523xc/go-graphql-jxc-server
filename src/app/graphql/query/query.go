@@ -2,17 +2,17 @@ package query
 
 import (
 	"errors"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
 	"gopkg.in/hlandau/passlib.v1"
-	"io/ioutil"
-	"os"
+	//"io/ioutil"
+	//"os"
 	"strconv"
 	"time"
 
 	"app/database"
 	"app/graphql/gtype"
+	"app/lib"
 )
 
 type loginUser struct {
@@ -20,17 +20,10 @@ type loginUser struct {
 	Token string
 }
 
-var ibbdSecretKey []byte = nil
-
 func init() {
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file!")
-	}
-
-	ibbdSecretKey, err = ioutil.ReadFile(os.Getenv("IBBD_SECRET_FILE"))
-	if err != nil {
-		panic("error")
 	}
 }
 
@@ -63,6 +56,85 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 
+		// 查询用户列表: 分页，排序
+		// 需要登陆状态才能操作
+		// curl -g 'http://localhost:8080/graphql?query={userList{ID,Name}}'
+		"userList": &graphql.Field{
+			Type: graphql.NewList(gtype.UserType),
+			Args: graphql.FieldConfigArgument{
+				// 页码
+				"Page": &graphql.ArgumentConfig{
+					Type: graphql.Int,
+				},
+				// 每页显示的条数，默认为20
+				"Limit": &graphql.ArgumentConfig{
+					Type: graphql.Int,
+				},
+				// 排序字段
+				"SortBy": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				// 排序类型
+				"SortType": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				// 登陆Token
+				"Token": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				var (
+					token    string
+					isOK     bool
+					page     int
+					limit    int
+					sortBy   string
+					sortType string
+				)
+
+				// check login
+				token, isOK = params.Args["Token"].(string)
+				if !isOK {
+					return nil, errors.New("Error: param Token")
+				}
+				println(token)
+				_, err := lib.ParseUserToken(token)
+				if err != nil {
+					return nil, errors.New("Error: parse Token")
+				}
+
+				page, isOK = params.Args["Page"].(int)
+				if !isOK || page < 1 {
+					page = 1
+				}
+				limit, isOK = params.Args["Limit"].(int)
+				if !isOK || limit < 5 {
+					limit = 20
+				}
+				sortBy, isOK = params.Args["SortBy"].(string)
+				if !isOK {
+					sortBy = "id"
+				}
+				sortType, isOK = params.Args["SortType"].(string)
+				if !isOK || sortType != "asc" {
+					sortType = "desc"
+				}
+
+				// 计算offset
+				offset := (page - 1) * limit
+
+				db := database.GetDB()
+				var users []database.User
+				if db.Order(sortBy + " " + sortType).Offset(offset).Limit(limit).Find(&users).RecordNotFound() {
+					return nil, errors.New("Error: not found at page = " + strconv.Itoa(page))
+				}
+
+				return users, nil
+			},
+		},
+
 		// 用户登陆
 		// curl -g 'http://localhost:8080/graphql?query={login(Phone:"135sd7223",Password:"12321"){ID,Token}}'
 		"login": &graphql.Field{
@@ -91,7 +163,7 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 				if db.Select([]string{"id", "password"}).Where("phone = ?", phoneQuery).First(&user).RecordNotFound() {
 					return nil, errors.New("Error: not found for phone = " + phoneQuery)
 				}
-				println(user.Password)
+				//println(user.Password)
 
 				_, err := passlib.Verify(passwordQuery, user.Password)
 				if err != nil {
@@ -99,14 +171,12 @@ var RootQuery = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				// 生成token
-				token := jwt.New(jwt.SigningMethodHS256)
-				token.Claims["user"] = "1"
-				token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-				tokenString, err := token.SignedString(ibbdSecretKey)
+				expTime := time.Now().Add(time.Hour * 72).Unix()
+				token, err := lib.GetUserToken(user.ID, expTime)
 				if err != nil {
 					return nil, errors.New("Error: create Token")
 				}
-				return loginUser{ID: 1, Token: tokenString}, nil
+				return loginUser{ID: 1, Token: token}, nil
 			},
 		},
 	},
