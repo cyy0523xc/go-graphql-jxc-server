@@ -19,6 +19,7 @@ type User struct {
 // 商品, 以最小SKU为标准
 type Goods struct {
 	ID        int32
+	UserID    int32
 	Code      string `gorm:"type:varchar(100)"`       // 商品码
 	Name      string `gorm:"size:255;index:idx_name"` // 名称
 	CreatedAt time.Time
@@ -28,7 +29,8 @@ type Goods struct {
 
 // 商品基本统计信息
 type GoodsBaseStat struct {
-	GoodsID             int32     `gorm:"unique"`
+	GoodsID             int32 `gorm:"unique"`
+	UserID              int32
 	CostPrice           float32   // 成本价
 	MSRP                float32   `gorm:"default 0"` // 厂商建议售价
 	Volume              int32     // 库存数量
@@ -45,6 +47,7 @@ type GoodsBaseStat struct {
 // TODO 可以增加商品分类, 不同的分类可以配置不同的属性
 type GoodsAttrConfig struct {
 	ID        int32
+	UserID    int32
 	Attr      string `gorm:"type:varchar(31);unique"` // 属性
 	ValueType string `gorm:"type:varchar(50)"`        // 属性值的类型
 	Remark    string `gorm:"type:varchar(255)"`       // 备注
